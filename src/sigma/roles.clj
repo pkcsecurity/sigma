@@ -11,7 +11,8 @@
            "/keys"
            "/init"
            "/identify"
-           "/message"]
+           "/message"
+           "/finalize"]
     :handler allow-all}
 
    ;Catch all for any unrecognized calls

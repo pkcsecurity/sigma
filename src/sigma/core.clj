@@ -1,16 +1,27 @@
 (ns sigma.core
   (:gen-class)
   (:require [immutant.web :as server]
-            [ring.middleware.file :as file]
-            [ring.middleware.params :as params]
-            [ring.middleware.keyword-params :as kw-params]
             [ring.middleware.content-type :as content-type]
+            [ring.middleware.keyword-params :as kw-params]
+            [ring.middleware.params :as params]
+            [sigma.properties :as p]
             [sigma.roles :as roles]
             [sigma.routes :as r]
-            [sigma.properties :as p]
-            [sigma.utils :as u]
-            [clj-http.client :as http]))
-          
+            [sigma.routes.ca :as ca]
+            [sigma.server :as s-server]
+            [sigma.client :as client]
+            [buddy.core.codecs :refer :all]
+            [caesium.crypto.sign :as sign]))
+
+(defn client-server-status []
+  {:client @client/client-info
+   :server @s-server/server-info})
+
+(defn client-server-shared-secret-keys []
+  (let [{:keys [client server]} (client-server-status)]
+    {:client (bytes->hex (:gxy client))
+     :server (bytes->hex (:gxy server))}))
+
 (defn wrap-ignore-trailing-slash [handler]
   (fn [request]
     (let [uri (:uri request)]
@@ -33,8 +44,16 @@
     ;(spec/wrap-conform-failure)
     ))
 
+(defn init-certs []
+  (let [a (sign/keypair!)
+        b (sign/keypair!)]
+    (swap! ca/certificates assoc "A" (:public a))
+    (swap! client/client-info assoc :sign (:secret a))
+    (swap! ca/certificates assoc "B" (:public b))
+    (swap! s-server/server-info assoc :sign (:secret b))))
+
 (defn -main []
-  ;(init)
+  (init-certs)
   (if p/prod?
     (server/run app
       :host "0.0.0.0"

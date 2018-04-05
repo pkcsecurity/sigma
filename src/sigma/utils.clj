@@ -7,15 +7,19 @@
             [msgpack.core :as msg]
             [msgpack.clojure-extensions]))
 
+(def visitor-data (atom {}))
+
 (defn http-ok [mp]
   {:status 200 :body (java.io.ByteArrayInputStream. (msg/pack mp))})
 
-(defn key->string [key]
-  (println (type key))
-  (cond
-    (instance? (byte-array []) key) (bytes->hex key)
-    (instance? java.nio.ByteBuffer key) (bytes->hex (.array key))
-    :else "Unknown type"))
+(defprotocol KeyPrettyPrint
+  (key->hex-string [obj]))
+
+(extend-protocol KeyPrettyPrint
+  (class (byte-array []))
+  (key->hex-string [obj] (bytes->hex obj))
+  java.nio.ByteBuffer
+  (key->hex-string [obj] (bytes->hex (.array obj))))
 
 (defn gen-keys []
   (box/keypair!))
