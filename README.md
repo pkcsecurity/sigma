@@ -1,6 +1,6 @@
 # sigma
 
-An implementation of Hugo Krawczyk's SIgn-and-Mac protocol. We are using a Client-server architecture.
+An implementation of Hugo Krawczyk's SIgn-and-Mac protocol.
 http://webee.technion.ac.il/~hugo/sigma-pdf.pdf
 
 ## Installation
